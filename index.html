@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mindful Productivity Dashboard</title>
+<style>
+    body {
+        font-family: "Segoe UI", sans-serif;
+        background-color: #f5f6fa;
+        color: #2f3640;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    header {
+        background: #2f3640;
+        color: white;
+        padding: 15px;
+        width: 100%;
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    .container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        padding: 20px;
+        width: 100%;
+        max-width: 1200px;
+    }
+    .card {
+        background: white;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    h2 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+    input, textarea, button {
+        width: 100%;
+        padding: 8px;
+        margin: 5px 0;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-family: inherit;
+    }
+    button {
+        background: #44bd32;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-weight: bold;
+    }
+    button:hover {
+        background: #27ae60;
+    }
+    ul {
+        list-style: none;
+        padding: 0;
+    }
+    li {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px;
+        background: #f1f2f6;
+        margin-bottom: 5px;
+        border-radius: 5px;
+    }
+    .delete {
+        color: red;
+        cursor: pointer;
+    }
+    .quote {
+        font-style: italic;
+        text-align: center;
+        color: #718093;
+    }
+    .timer {
+        font-size: 2rem;
+        text-align: center;
+        margin: 10px 0;
+    }
+</style>
+</head>
+<body>
+<header>🧘 Mindful Productivity Dashboard</header>
+
+<div class="container">
+
+    <!-- Task List -->
+    <div class="card">
+        <h2>✅ Task List</h2>
+        <input type="text" id="taskInput" placeholder="Add a new task">
+        <button onclick="addTask()">Add Task</button>
+        <ul id="taskList"></ul>
+    </div>
+
+    <!-- Daily Journal -->
+    <div class="card">
+        <h2>📓 Daily Journal</h2>
+        <textarea id="journal" placeholder="Write your thoughts..."></textarea>
+    </div>
+
+    <!-- Habit Tracker -->
+    <div class="card">
+        <h2>🔥 Habit Tracker</h2>
+        <p>Streak: <span id="streak">0</span> days</p>
+        <button onclick="markHabit()">Mark Today ✅</button>
+    </div>
+
+    <!-- Calendar -->
+    <div class="card">
+        <h2>📅 Calendar</h2>
+        <input type="date" id="calendar">
+    </div>
+
+    <!-- Focus Timer -->
+    <div class="card">
+        <h2>⏳ Focus Timer</h2>
+        <div class="timer" id="timerDisplay">25:00</div>
+        <button onclick="startTimer()">Start</button>
+        <button onclick="resetTimer()">Reset</button>
+    </div>
+
+    <!-- Quotes -->
+    <div class="card">
+        <h2>💬 Daily Quote</h2>
+        <p class="quote" id="quoteText"></p>
+    </div>
+
+</div>
+
+<script>
+    // ===== Task List =====
+    let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+    function renderTasks() {
+        document.getElementById("taskList").innerHTML = tasks.map((t, i) => 
+            `<li>${t} <span class='delete' onclick="deleteTask(${i})">❌</span></li>`).join("");
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+    }
+    function addTask() {
+        const task = document.getElementById("taskInput").value.trim();
+        if (task) {
+            tasks.push(task);
+            document.getElementById("taskInput").value = "";
+            renderTasks();
+        }
+    }
+    function deleteTask(i) {
+        tasks.splice(i, 1);
+        renderTasks();
+    }
+    renderTasks();
+
+    // ===== Journal =====
+    const journalEl = document.getElementById("journal");
+    journalEl.value = localStorage.getItem("journal") || "";
+    journalEl.addEventListener("input", () => {
+        localStorage.setItem("journal", journalEl.value);
+    });
+
+    // ===== Habit Tracker =====
+    let streak = parseInt(localStorage.getItem("streak")) || 0;
+    let lastMarked = localStorage.getItem("lastMarked") || "";
+    document.getElementById("streak").innerText = streak;
+    function markHabit() {
+        const today = new Date().toDateString();
+        if (lastMarked !== today) {
+            streak++;
+            lastMarked = today;
+            localStorage.setItem("streak", streak);
+            localStorage.setItem("lastMarked", lastMarked);
+            document.getElementById("streak").innerText = streak;
+        }
+    }
+
+    // ===== Focus Timer =====
+    let timer;
+    let timeLeft = 25 * 60;
+    function updateTimerDisplay() {
+        let min = Math.floor(timeLeft / 60);
+        let sec = timeLeft % 60;
+        document.getElementById("timerDisplay").innerText = 
+            `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    }
+    function startTimer() {
+        clearInterval(timer);
+        timer = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateTimerDisplay();
+            } else {
+                clearInterval(timer);
+                alert("Time's up! Take a break.");
+            }
+        }, 1000);
+    }
+    function resetTimer() {
+        clearInterval(timer);
+        timeLeft = 25 * 60;
+        updateTimerDisplay();
+    }
+    updateTimerDisplay();
+
+    // ===== Daily Quote =====
+const quotes = [
+  "Push yourself, because no one else is going to do it for you.",
+  "The secret to getting ahead is getting started.",
+  "Don’t watch the clock; do what it does. Keep going.",
+  "Success is the sum of small efforts repeated day in and day out.",
+  "It’s not about having time. It’s about making time.",
+  "The harder you work for something, the greater you’ll feel when you achieve it.",
+  "Dream bigger. Do bigger.",
+  "Don’t stop when you’re tired. Stop when you’re done.",
+  "Wake up with determination. Go to bed with satisfaction.",
+  "Do something today that your future self will thank you for.",
+  "Little things make big days.",
+  "It’s going to be hard, but hard does not mean impossible.",
+  "Don’t wait for opportunity. Create it.",
+  "Great things never come from comfort zones.",
+  "Believe in yourself and all that you are.",
+  "Discipline is choosing between what you want now and what you want most.",
+  "The key to success is to focus on goals, not obstacles.",
+  "Push harder than yesterday if you want a different tomorrow.",
+  "Don’t limit your challenges. Challenge your limits.",
+  "Your only limit is your mind.",
+  "Stay positive, work hard, make it happen.",
+  "Consistency is what transforms average into excellence.",
+  "Small progress is still progress.",
+  "Success doesn’t come from what you do occasionally, it comes from what you do consistently.",
+  "Your dreams don’t work unless you do.",
+  "Fall seven times and stand up eight.",
+  "Don’t be afraid to give up the good to go for the great.",
+  "Opportunities don’t happen, you create them.",
+  "Hard work beats talent when talent doesn’t work hard.",
+  "Be so good they can’t ignore you.",
+  "Action is the foundational key to all success.",
+  "Focus on being productive instead of busy.",
+  "The future depends on what you do today.",
+  "You don’t have to be great to start, but you have to start to be great.",
+  "Do what you can, with what you have, where you are.",
+  "If it’s important to you, you’ll find a way. If not, you’ll find an excuse.",
+  "Success is not final, failure is not fatal: it is the courage to continue that counts.",
+  "Winners are not afraid of losing. But losers are.",
+  "The way to get started is to quit talking and begin doing.",
+  "Perseverance is not a long race; it is many short races one after the other.",
+  "It’s never too late to be what you might have been.",
+  "A little progress each day adds up to big results.",
+  "Quality is not an act, it is a habit.",
+  "If you get tired, learn to rest, not to quit.",
+  "Success usually comes to those who are too busy to be looking for it.",
+  "Nothing will work unless you do.",
+  "You are capable of more than you know.",
+  "Do something every day that brings you closer to your goals.",
+  "The best way to predict the future is to create it.",
+  "Work while they sleep. Learn while they party. Save while they spend. Live like they dream.",
+  "The man who moves a mountain begins by carrying away small stones.",
+  "Your time is limited, don’t waste it living someone else’s life.",
+  "You miss 100% of the shots you don’t take.",
+  "Don’t count the days, make the days count.",
+  "If you’re going through hell, keep going.",
+  "A goal without a plan is just a wish.",
+  "Motivation gets you started. Habit keeps you going.",
+  "Don’t wish it were easier; wish you were better."
+];
+    const todayIndex = new Date().getDate() % quotes.length;
+    document.getElementById("quoteText").innerText = quotes[todayIndex];
+</script>
+
+</body>
+</html>
